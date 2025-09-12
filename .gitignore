@@ -1,0 +1,59 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.plan
+plan.out
+.terraform.tfstate.lock.info
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
+
+# Local backend config (use the example file instead)
+infra/backend.hcl
+infra/backend.generated.hcl
+
+# Deployment commands
+infra/deployment-commands.txt
+
+# Ignore Terraform provider lockfile for bootstrap env
+infra/bootstrap/.terraform.lock.hcl
+
+# Local variable files that often hold secrets
+terraform.tfvars
+*.auto.tfvars
+# keep environment tfvars in version control
+!infra/envs/**/terraform.tfvars
+
+# Common env files with secrets
+.env
+.env.*
+*.env
+
+# Private keys and certs
+*.pem
+*.key
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+*.p12
+*.pfx
+*.cer
+*.crt
+
+# IDE
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Claude Code documentation
+CLAUDE.md
+
+# Blog posts and drafts
+blog-post-*.md
