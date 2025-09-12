@@ -1,24 +1,52 @@
 # AWS Three-Tier Architecture with Terraform and CI/CD
 
-This project deploys a three-tier network architecture in AWS using Terraform with GitOps-ready CI/CD workflows.
+This project deploys a complete, production-ready three-tier web application architecture in AWS using Terraform with GitOps-ready CI/CD workflows.
 
 ## 🏗️ Architecture Overview
 
-The project creates a robust three-tier network architecture:
+This project creates a comprehensive three-tier architecture with a working web application:
 
-- **Public Tier**: Public subnets for load balancers and NAT gateways
-- **Private App Tier**: Private subnets for application servers
-- **Private DB Tier**: Private subnets for databases
+### **Tier 1: Web/Presentation Layer**
+- **Application Load Balancer (ALB)** with SSL termination
+- **Auto Scaling Group** with EC2 instances in private subnets
+- **HTTPS/SSL** encryption with ACM certificates
+
+### **Tier 2: Application Layer** 
+- **EC2 instances** running PHP web application
+- **Auto Scaling** with configurable min/max capacity
+- **Security Groups** allowing only necessary traffic
+- **Sample web application** that connects to the database
+
+### **Tier 3: Database Layer**
+- **RDS MySQL** database with Multi-AZ support
+- **Database subnet group** in private subnets
+- **Automated database initialization** with sample data
+- **Encrypted storage** for security
 
 ## 🚀 Features
 
-- **Three-tier VPC** with public, private app, and private DB subnets
-- **Multi-AZ deployment** for high availability
-- **NAT Gateway** for private subnet internet access
-- **VPC Flow Logs** (optional)
-- **Network ACLs** (optional)
-- **GitOps workflow** with GitHub Actions
-- **Automated Terraform plan/apply** on pull requests and merges
+### **Infrastructure**
+- **Complete three-tier architecture** with web, app, and database layers
+- **High availability** across multiple Availability Zones
+- **Auto Scaling** for dynamic capacity management
+- **Load balancing** with health checks
+- **Secure networking** with proper security group rules
+- **Encrypted storage** and secure communications
+
+### **Web Application**
+- **One-click deployment** - no manual configuration needed
+- **SSL certificate support** for HTTPS encryption
+- **Database connectivity** with sample data display
+- **Beautiful web interface** showing architecture status
+- **Real-time monitoring** of all tiers
+
+### **DevOps & Automation**
+- **Professional CI/CD pipeline** with GitHub Actions
+- **Multi-environment support** (dev, staging, prod)
+- **Automated testing** with terraform plan on PRs
+- **Environment-specific deployments**
+- **Manual destroy workflows** for cost management
+- **Comprehensive deployment summaries**
 
 ## 📁 Project Structure
 
@@ -61,39 +89,47 @@ AWS_REGION            # AWS region (e.g., us-west-2)
 
 ### Terraform Variables
 
-Copy `terraform.tfvars.example` to `terraform.tfvars` in the project root and customize:
+Copy `terraform.tfvars.example` to `infra/envs/{environment}/terraform.tfvars` and customize:
 
 ```bash
-cp terraform.tfvars.example terraform.tfvars
+# Example for dev environment
+cp terraform.tfvars.example infra/envs/dev/terraform.tfvars
 ```
 
-Key configuration options:
+**Required Configuration:**
 
 ```hcl
 # Basic Configuration
 region = "us-west-2"
 env_name = "dev"
 project_prefix = "three-tier"
-aws_profile = ""  # Leave empty for default AWS profile
+aws_profile = "your-aws-profile"
 
-# Network Configuration
+# Network Configuration  
 vpc_cidr = "10.0.0.0/16"
 az_count = 2
 
-# Network Feature Flags
-enable_nat_gateway = true
-single_nat_gateway = true  # Set to false for HA (one NAT per AZ)
-enable_flow_logs   = false # Enable for network monitoring
-enable_nacls       = false # Enable for additional security
+# Application Configuration (REQUIRED)
+certificate_arn = "arn:aws:acm:us-west-2:123456789012:certificate/your-certificate-id"
+domain_name     = "yourdomain.com"  # Used for ALB listener, NOT for DNS creation
+subdomain       = "demo"            # Creates subdomain.yourdomain.com
 
-# Resource Tags
-tags = {
-  Environment = "dev"
-  Project     = "three-tier-architecture"
-  Owner       = "platform-team"
-  ManagedBy   = "terraform"
-}
+# Database Configuration
+db_password = "YourSecurePassword123!"
+
+# Web Tier Scaling
+web_min_capacity     = 1
+web_max_capacity     = 3
+web_desired_capacity = 2
 ```
+
+### DNS Configuration (External)
+
+⚠️ **Important**: This project does **NOT** create DNS records. You must manually configure your DNS provider to point your domain/subdomain to the ALB DNS name:
+
+1. Deploy the infrastructure with Terraform
+2. Get the ALB DNS name from terraform outputs: `terraform output load_balancer_dns_name`  
+3. Create a CNAME record in your DNS provider: `demo.yourdomain.com` → `your-alb-dns-name.us-west-2.elb.amazonaws.com`
 
 ## 🚀 Deployment
 
@@ -124,10 +160,17 @@ terraform apply
 
 The deployment provides the following outputs:
 
+### **Network Outputs**
 - `vpc_id` - VPC ID
 - `public_subnet_ids` - List of public subnet IDs
 - `private_app_subnet_ids` - List of private app subnet IDs
 - `private_db_subnet_ids` - List of private DB subnet IDs
+
+### **Application Outputs**
+- `application_url` - HTTPS URL of the application (requires DNS setup)
+- `load_balancer_dns_name` - ALB DNS name (use this for DNS provider CNAME)
+- `auto_scaling_group_name` - Auto Scaling Group name
+- `database_endpoint` - RDS endpoint (sensitive)
 
 ## 🗑️ Cleanup
 

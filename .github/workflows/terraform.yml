@@ -1,21 +1,46 @@
-name: 'Terraform'
+name: 'Three-Tier Architecture CI/CD'
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
+      action:
+        description: 'Terraform action'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+        - plan
+        - apply
+        - destroy
 
 permissions:
   contents: read
   pull-requests: write
+  issues: write
 
 jobs:
-  terraform:
-    name: 'Terraform'
+  terraform-plan:
+    name: 'Terraform Plan'
     runs-on: ubuntu-latest
-    environment: production
-
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'plan')
+    
+    strategy:
+      matrix:
+        environment: [dev, staging]
+    
     defaults:
       run:
         shell: bash
@@ -39,11 +64,11 @@ jobs:
 
     - name: Terraform Format
       id: fmt
-      run: terraform fmt -check
+      run: terraform fmt -check -recursive
 
     - name: Terraform Init
       id: init
-      run: terraform init
+      run: terraform init -backend-config="key=three-tier-${{ matrix.environment }}.tfstate"
 
     - name: Terraform Validate
       id: validate
@@ -51,24 +76,26 @@ jobs:
 
     - name: Terraform Plan
       id: plan
-      if: github.event_name == 'pull_request'
-      run: terraform plan -no-color -input=false
+      run: terraform plan -var-file="${{ matrix.environment }}/terraform.tfvars" -no-color -input=false -out="${{ matrix.environment }}.tfplan"
       continue-on-error: true
 
-    - name: Update Pull Request
+    - name: Update Pull Request - ${{ matrix.environment }}
       uses: actions/github-script@v7
       if: github.event_name == 'pull_request'
       env:
         PLAN: ${{ steps.plan.outputs.stdout }}
+        ENVIRONMENT: ${{ matrix.environment }}
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-          #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-          #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-          #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+          const output = `## 🏗️ Terraform Plan Results - ${process.env.ENVIRONMENT.toUpperCase()}
 
-          <details><summary>Show Plan</summary>
+          #### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
+          #### Terraform Initialization ⚙️ \`${{ steps.init.outcome }}\`  
+          #### Terraform Validation 🤖 \`${{ steps.validate.outcome }}\`
+          #### Terraform Plan 📖 \`${{ steps.plan.outcome }}\`
+
+          <details><summary>Show ${process.env.ENVIRONMENT} Plan</summary>
 
           \`\`\`terraform
           ${process.env.PLAN}
@@ -76,7 +103,8 @@ jobs:
 
           </details>
 
-          *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+          ---
+          *Environment: \`${process.env.ENVIRONMENT}\` | Triggered by: @${{ github.actor }}*`;
 
           github.rest.issues.createComment({
             issue_number: context.issue.number,
@@ -89,6 +117,134 @@ jobs:
       if: steps.plan.outcome == 'failure'
       run: exit 1
 
+    - name: Upload Plan Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: terraform-plan-${{ matrix.environment }}
+        path: ./infra/envs/${{ matrix.environment }}.tfplan
+        retention-days: 5
+
+  terraform-apply:
+    name: 'Terraform Apply'
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+    environment: 
+      name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'dev' }}
+      url: ${{ steps.output.outputs.application_url }}
+    
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./infra/envs
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: "1.8.0"
+        terraform_wrapper: false
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ vars.AWS_REGION }}
+
+    - name: Set Environment
+      id: set-env
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "ENVIRONMENT=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+        else
+          echo "ENVIRONMENT=dev" >> $GITHUB_ENV
+        fi
+
+    - name: Terraform Init
+      run: terraform init -backend-config="key=three-tier-${{ env.ENVIRONMENT }}.tfstate"
+
+    - name: Terraform Plan
+      run: terraform plan -var-file="${{ env.ENVIRONMENT }}/terraform.tfvars" -input=false
+
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false
+      run: terraform apply -var-file="${{ env.ENVIRONMENT }}/terraform.tfvars" -auto-approve -input=false
+
+    - name: Get Outputs
+      id: output
+      run: |
+        APPLICATION_URL=$(terraform output -raw application_url)
+        LOAD_BALANCER_DNS=$(terraform output -raw load_balancer_dns_name)
+        ASG_NAME=$(terraform output -raw auto_scaling_group_name)
+        
+        echo "application_url=$APPLICATION_URL" >> $GITHUB_OUTPUT
+        echo "load_balancer_dns=$LOAD_BALANCER_DNS" >> $GITHUB_OUTPUT
+        echo "asg_name=$ASG_NAME" >> $GITHUB_OUTPUT
+
+    - name: Deployment Summary
+      run: |
+        echo "## 🚀 Deployment Successful - ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 Deployment Details" >> $GITHUB_STEP_SUMMARY
+        echo "- **Environment**: ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Application URL**: [${{ steps.output.outputs.application_url }}](${{ steps.output.outputs.application_url }})" >> $GITHUB_STEP_SUMMARY
+        echo "- **Load Balancer**: ${{ steps.output.outputs.load_balancer_dns }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Auto Scaling Group**: ${{ steps.output.outputs.asg_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🏗️ Architecture Deployed" >> $GITHUB_STEP_SUMMARY
+        echo "✅ **Web Tier**: Application Load Balancer + Auto Scaling Group" >> $GITHUB_STEP_SUMMARY
+        echo "✅ **App Tier**: EC2 instances with PHP application" >> $GITHUB_STEP_SUMMARY  
+        echo "✅ **DB Tier**: RDS MySQL with sample data" >> $GITHUB_STEP_SUMMARY
+        echo "✅ **Security**: HTTPS with SSL certificate" >> $GITHUB_STEP_SUMMARY
+        echo "✅ **Load Balancer**: DNS name available for external DNS setup" >> $GITHUB_STEP_SUMMARY
+
+  terraform-destroy:
+    name: 'Terraform Destroy'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+    environment: 
+      name: ${{ github.event.inputs.environment }}
+    
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./infra/envs
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: "1.8.0"
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ vars.AWS_REGION }}
+
+    - name: Terraform Init
+      run: terraform init -backend-config="key=three-tier-${{ github.event.inputs.environment }}.tfstate"
+
+    - name: Terraform Destroy
+      run: terraform destroy -var-file="${{ github.event.inputs.environment }}/terraform.tfvars" -auto-approve
+
+    - name: Destroy Summary
+      run: |
+        echo "## 🗑️ Infrastructure Destroyed - ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 Destruction Details" >> $GITHUB_STEP_SUMMARY
+        echo "- **Environment**: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Triggered by**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Time**: $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🏗️ Resources Destroyed" >> $GITHUB_STEP_SUMMARY
+        echo "❌ **Web Tier**: Load balancer and auto scaling resources" >> $GITHUB_STEP_SUMMARY
+        echo "❌ **App Tier**: EC2 instances and launch templates" >> $GITHUB_STEP_SUMMARY
+        echo "❌ **DB Tier**: RDS database and subnet groups" >> $GITHUB_STEP_SUMMARY
+        echo "❌ **Network**: VPC, subnets, and routing" >> $GITHUB_STEP_SUMMARY
