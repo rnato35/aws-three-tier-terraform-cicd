@@ -22,10 +22,10 @@ module "application" {
   name        = "${var.project_prefix}-${local.env}"
   environment = var.env_name
 
-  vpc_id                  = module.network.vpc_id
-  public_subnet_ids       = module.network.public_subnet_ids
-  private_app_subnet_ids  = module.network.private_app_subnet_ids
-  private_db_subnet_ids   = module.network.private_db_subnet_ids
+  vpc_id                 = module.network.vpc_id
+  public_subnet_ids      = module.network.public_subnet_ids
+  private_app_subnet_ids = module.network.private_app_subnet_ids
+  private_db_subnet_ids  = module.network.private_db_subnet_ids
 
   certificate_arn = var.certificate_arn
   domain_name     = var.domain_name
@@ -36,19 +36,17 @@ module "application" {
   web_max_capacity     = var.web_max_capacity
   web_desired_capacity = var.web_desired_capacity
 
-  db_instance_class     = var.db_instance_class
-  db_allocated_storage  = var.db_allocated_storage
-  db_engine_version     = var.db_engine_version
-  db_name               = var.db_name
-  db_username           = var.db_username
-  db_password           = var.db_password
+  db_instance_class    = var.db_instance_class
+  db_allocated_storage = var.db_allocated_storage
+  db_engine_version    = var.db_engine_version
+  db_name              = var.db_name
+  db_username          = var.db_username
+  db_password          = var.db_password
 
   tags = local.tags
 
   depends_on = [module.network]
 }
-
-
 
 # Network outputs
 output "vpc_id" { value = module.network.vpc_id }
@@ -82,4 +80,3 @@ output "full_domain" {
   description = "Full domain name of the application"
   value       = module.application.full_domain
 }
-

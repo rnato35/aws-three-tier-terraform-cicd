@@ -1,9 +1,9 @@
 # AWS Three-Tier Architecture Configuration - Staging Environment
 
 # Basic Configuration
-env_name    = "staging"
-region      = "us-east-1"
-aws_profile = "rnato35"
+env_name       = "staging"
+region         = "us-east-1"
+aws_profile    = "rnato35"
 project_prefix = "three-tier"
 
 # Network Configuration
@@ -13,7 +13,7 @@ az_count = 2
 # Network Feature Flags
 enable_nat_gateway = true
 single_nat_gateway = true
-enable_flow_logs   = true  # Enabled for staging monitoring
+enable_flow_logs   = true # Enabled for staging monitoring
 enable_nacls       = false
 
 # Application Configuration
@@ -28,12 +28,12 @@ web_max_capacity     = 4
 web_desired_capacity = 2
 
 # Database Configuration
-db_instance_class     = "db.t3.small"
-db_allocated_storage  = 20
-db_engine_version     = "8.0"
-db_name               = "sampledb"
-db_username           = "admin"
-db_password           = "StagingPassword123!"
+db_instance_class    = "db.t3.small"
+db_allocated_storage = 20
+db_engine_version    = "8.0"
+db_name              = "sampledb"
+db_username          = "admin"
+db_password          = "StagingPassword123!"
 
 # Resource Tags
 tags = {

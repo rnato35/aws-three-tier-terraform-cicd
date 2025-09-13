@@ -1,9 +1,9 @@
 # AWS Three-Tier Architecture Configuration - Dev Environment
 
 # Basic Configuration
-env_name    = "dev"
-region      = "us-east-1"
-aws_profile = "rnato35"
+env_name       = "dev"
+region         = "us-east-1"
+aws_profile    = "rnato35"
 project_prefix = "three-tier"
 
 # Network Configuration
@@ -28,12 +28,12 @@ web_max_capacity     = 3
 web_desired_capacity = 2
 
 # Database Configuration
-db_instance_class     = "db.t3.micro"
-db_allocated_storage  = 20
-db_engine_version     = "8.0"
-db_name               = "sampledb"
-db_username           = "admin"
-db_password           = "DevPassword123!"
+db_instance_class    = "db.t3.micro"
+db_allocated_storage = 20
+db_engine_version    = "8.0"
+db_name              = "sampledb"
+db_username          = "admin"
+db_password          = "DevPassword123!"
 
 # Resource Tags
 tags = {

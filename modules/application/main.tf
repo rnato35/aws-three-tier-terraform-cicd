@@ -295,10 +295,10 @@ resource "aws_launch_template" "web" {
 }
 
 resource "aws_autoscaling_group" "web" {
-  name                = "${var.name}-web-asg"
-  vpc_zone_identifier = var.private_app_subnet_ids
-  target_group_arns   = [aws_lb_target_group.web.arn]
-  health_check_type   = "ELB"
+  name                      = "${var.name}-web-asg"
+  vpc_zone_identifier       = var.private_app_subnet_ids
+  target_group_arns         = [aws_lb_target_group.web.arn]
+  health_check_type         = "ELB"
   health_check_grace_period = 300
 
   min_size         = var.web_min_capacity
@@ -344,10 +344,10 @@ resource "aws_db_subnet_group" "main" {
 resource "aws_db_instance" "main" {
   identifier = "${var.name}-database"
 
-  allocated_storage    = var.db_allocated_storage
+  allocated_storage     = var.db_allocated_storage
   max_allocated_storage = var.db_allocated_storage * 2
-  storage_type         = "gp2"
-  storage_encrypted    = true
+  storage_type          = "gp2"
+  storage_encrypted     = true
 
   engine         = "mysql"
   engine_version = var.db_engine_version
@@ -361,8 +361,8 @@ resource "aws_db_instance" "main" {
   db_subnet_group_name   = aws_db_subnet_group.main.name
 
   backup_retention_period = 7
-  backup_window          = "03:00-04:00"
-  maintenance_window     = "Sun:04:00-Sun:05:00"
+  backup_window           = "03:00-04:00"
+  maintenance_window      = "Sun:04:00-Sun:05:00"
 
   skip_final_snapshot = true
   deletion_protection = false
