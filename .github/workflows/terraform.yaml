@@ -198,10 +198,6 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
-    defaults:
-      run:
-        shell: bash
-        working-directory: infra/envs
     steps:
       - name: Validate destroy confirmation
         if: github.event.inputs.action == 'destroy'
@@ -228,6 +224,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Init (remote backend)
+        working-directory: infra/envs
         run: |
           terraform init \
             -backend-config="bucket=${{ vars.TF_BACKEND_BUCKET }}" \
@@ -240,12 +237,15 @@ jobs:
             -backend-config="workspace_key_prefix=envs"
 
       - name: Terraform Fmt Check
+        working-directory: infra/envs
         run: terraform fmt -check -recursive
 
       - name: Terraform Validate
+        working-directory: infra/envs
         run: terraform validate
 
       - name: Select Workspace
+        working-directory: infra/envs
         run: |
           ENV="${{ github.event.inputs.environment }}"
           terraform workspace list | grep -q " $ENV$" || terraform workspace new "$ENV"
@@ -295,6 +295,7 @@ jobs:
           exclude-workflow-initiator-as-approver: false
 
       - name: Terraform Plan
+        working-directory: infra/envs
         env:
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
         run: |
@@ -315,6 +316,7 @@ jobs:
 
       - name: Terraform Apply/Destroy
         if: github.event.inputs.action == 'apply' || github.event.inputs.action == 'destroy'
+        working-directory: infra/envs
         env:
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
         run: |
