@@ -27,6 +27,7 @@ infra/bootstrap/.terraform.lock.hcl
 # Local variable files that often hold secrets
 terraform.tfvars
 *.auto.tfvars
+terraform.tfvars.local
 # keep environment tfvars in version control
 !infra/envs/**/terraform.tfvars
 

@@ -1,9 +1,10 @@
 # AWS Three-Tier Architecture Configuration - Dev Environment
+# Copy this file to terraform.tfvars and customize for your local environment
 
 # Basic Configuration
 env_name       = "dev"
 region         = "us-east-1"
-aws_profile    = ""  # Leave empty for CI/CD, set locally if needed
+aws_profile    = "your-profile-name"  # Set your local AWS profile here
 project_prefix = "three-tier"
 
 # Network Configuration
@@ -17,8 +18,8 @@ enable_flow_logs   = false
 enable_nacls       = false
 
 # Application Configuration
-certificate_arn = "arn:aws:acm:us-east-1:825982271549:certificate/52f508c8-eff0-4fb5-ac5f-51e9cca94ed7"
-domain_name     = "renatomendoza.io"
+certificate_arn = "arn:aws:acm:us-east-1:YOUR-ACCOUNT-ID:certificate/YOUR-CERT-ID"
+domain_name     = "your-domain.com"
 subdomain       = "dev-demo"
 
 # Web Tier Configuration
@@ -39,6 +40,6 @@ db_password          = "DevPassword123!"
 tags = {
   Environment = "dev"
   Project     = "three-tier-architecture"
-  Owner       = "renato@renatomendoza.io"
+  Owner       = "your-email@domain.com"
   ManagedBy   = "terraform"
 }
