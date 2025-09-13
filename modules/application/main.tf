@@ -222,6 +222,13 @@ resource "aws_iam_role_policy" "web_policy" {
           "logs:PutLogEvents"
         ]
         Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = aws_secretsmanager_secret.db_password.arn
       }
     ]
   })
@@ -238,13 +245,16 @@ resource "aws_iam_instance_profile" "web" {
 
 locals {
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    db_host     = aws_db_instance.main.endpoint
-    db_name     = var.db_name
-    db_username = var.db_username
-    db_password = var.db_password
-    domain      = local.full_domain
+    db_host                    = aws_db_instance.main.endpoint
+    db_name                    = var.db_name
+    db_username                = var.db_username
+    secrets_manager_secret_name = aws_secretsmanager_secret.db_password.name
+    aws_region                 = data.aws_region.current.name
+    domain                     = local.full_domain
   }))
 }
+
+data "aws_region" "current" {}
 
 # ===================================
 # Launch Template and Auto Scaling Group
@@ -324,6 +334,26 @@ resource "aws_autoscaling_group" "web" {
       propagate_at_launch = true
     }
   }
+}
+
+# ===================================
+# Secrets Manager for Database Password
+# ===================================
+
+resource "aws_secretsmanager_secret" "db_password" {
+  name        = "${var.name}-db-password"
+  description = "RDS database master password"
+  
+  tags = merge(var.tags, {
+    Name = "${var.name}-db-password"
+    Type = "Secrets Manager Secret"
+    Tier = "Database"
+  })
+}
+
+resource "aws_secretsmanager_secret_version" "db_password" {
+  secret_id     = aws_secretsmanager_secret.db_password.id
+  secret_string = var.db_password
 }
 
 # ===================================

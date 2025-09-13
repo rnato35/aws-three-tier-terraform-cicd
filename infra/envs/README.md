@@ -34,6 +34,14 @@ If you prefer using AWS profiles for local development:
 The main `terraform.tfvars` file is configured for CI/CD environments:
 - `aws_profile = ""` - Uses default AWS provider authentication
 - AWS credentials are provided via GitHub Secrets or IAM roles
+- Database password is provided via GitHub Secrets (`DB_PASSWORD`)
+
+## Security
+This project implements secure password management:
+- Database passwords are stored in GitHub Secrets for CI/CD
+- Runtime passwords are retrieved from AWS Secrets Manager
+- No sensitive data is stored in version control
+- See [SECURITY.md](../../SECURITY.md) for detailed setup instructions
 
 ## Usage
 - Copy one of the tfvars under dev/staging/prod and adjust values.

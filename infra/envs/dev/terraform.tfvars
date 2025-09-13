@@ -33,7 +33,7 @@ db_allocated_storage = 20
 db_engine_version    = "8.0"
 db_name              = "sampledb"
 db_username          = "admin"
-db_password          = "DevPassword123!"
+# db_password - Set via GitHub Secrets (TF_VAR_db_password) in CI/CD
 
 # Resource Tags
 tags = {

@@ -40,11 +40,15 @@ systemctl status httpd
 
 echo "Health check endpoint created and Apache started. Proceeding with database setup..."
 
+# Retrieve database password from AWS Secrets Manager
+echo "Retrieving database password from Secrets Manager..."
+DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id "${secrets_manager_secret_name}" --region "${aws_region}" --query SecretString --output text)
+
 # Wait for RDS to be ready (with timeout)
 echo "Waiting for database to be ready..."
 timeout=300  # 5 minutes timeout
 counter=0
-while ! mysqladmin ping -h"${db_host}" -u"${db_username}" -p"${db_password}" --silent; do
+while ! mysqladmin ping -h"${db_host}" -u"${db_username}" -p"$DB_PASSWORD" --silent; do
     if [ $counter -ge $timeout ]; then
         echo "Database connection timeout after $timeout seconds"
         # Continue anyway - we'll show an error in the web app
@@ -58,7 +62,7 @@ done
 echo "Database is ready, creating tables and sample data..."
 
 # Create the database and sample data with explicit charset
-mysql -h "${db_host}" -u "${db_username}" -p"${db_password}" --default-character-set=utf8 << EOF
+mysql -h "${db_host}" -u "${db_username}" -p"$DB_PASSWORD" --default-character-set=utf8 << EOF
 USE ${db_name};
 
 CREATE TABLE IF NOT EXISTS users (
@@ -248,8 +252,13 @@ cat > /var/www/html/index.php << 'EOF'
             <?php
             $servername = "${db_host}";
             $username = "${db_username}";
-            $password = "${db_password}";
             $dbname = "${db_name}";
+            
+            // Retrieve password from AWS Secrets Manager
+            $secretName = "${secrets_manager_secret_name}";
+            $region = "${aws_region}";
+            $cmd = "aws secretsmanager get-secret-value --secret-id '$secretName' --region '$region' --query SecretString --output text 2>/dev/null";
+            $password = trim(shell_exec($cmd));
             
             $conn = new mysqli($servername, $username, $password, $dbname);
             

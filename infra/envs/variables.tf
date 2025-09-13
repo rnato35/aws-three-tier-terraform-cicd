@@ -163,9 +163,10 @@ variable "db_username" {
 }
 
 variable "db_password" {
-  description = "Database master password"
+  description = "Database master password (use GitHub Secrets in CI/CD)"
   type        = string
   sensitive   = true
+  default     = null
 }
 
 
