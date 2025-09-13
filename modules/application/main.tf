@@ -249,7 +249,7 @@ locals {
     db_name                    = var.db_name
     db_username                = var.db_username
     secrets_manager_secret_name = aws_secretsmanager_secret.db_password.name
-    aws_region                 = data.aws_region.current.name
+    aws_region                 = data.aws_region.current.region
     domain                     = local.full_domain
   }))
 }
