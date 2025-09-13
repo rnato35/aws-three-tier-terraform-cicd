@@ -340,9 +340,14 @@ resource "aws_autoscaling_group" "web" {
 # Secrets Manager for Database Password
 # ===================================
 
+resource "random_id" "secret_suffix" {
+  byte_length = 4
+}
+
 resource "aws_secretsmanager_secret" "db_password" {
-  name        = "${var.name}-db-password"
-  description = "RDS database master password"
+  name                    = "${var.name}-db-password-${random_id.secret_suffix.hex}"
+  description             = "RDS database master password"
+  recovery_window_in_days = 0  # Allow immediate deletion/recreation
   
   tags = merge(var.tags, {
     Name = "${var.name}-db-password"
