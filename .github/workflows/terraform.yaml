@@ -5,6 +5,7 @@ on:
     branches: [ env/dev, env/staging, env/prod ]
     paths:
       - 'infra/envs/**'
+      - 'modules/**'
       - '.github/workflows/terraform.yaml'
   push:
     branches: [ env/dev, env/staging, env/prod ]
