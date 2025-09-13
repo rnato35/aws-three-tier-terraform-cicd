@@ -3,7 +3,7 @@
 # Basic Configuration
 env_name       = "dev"
 region         = "us-east-1"
-aws_profile    = ""  # Leave empty for CI/CD, set locally if needed
+aws_profile    = "" # Leave empty for CI/CD, set locally if needed
 project_prefix = "three-tier"
 
 # Network Configuration
