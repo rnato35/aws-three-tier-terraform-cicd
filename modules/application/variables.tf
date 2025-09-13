@@ -46,7 +46,7 @@ variable "subdomain" {
 variable "web_instance_type" {
   description = "EC2 instance type for web tier"
   type        = string
-  default     = "t3.micro"
+  default     = "t3a.micro"
 }
 
 variable "web_min_capacity" {
