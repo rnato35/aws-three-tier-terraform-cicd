@@ -41,10 +41,11 @@ terraform workspace list
 ## State File Locations
 
 With the workspace configuration:
-- **State files**: `<bucket>/envs/{workspace}/global/terraform.tfstate`
-- **dev workspace**: `<bucket>/envs/dev/global/terraform.tfstate`
-- **staging workspace**: `<bucket>/envs/staging/global/terraform.tfstate`
-- **prod workspace**: `<bucket>/envs/prod/global/terraform.tfstate`
+
+- **State files**: `<bucket>/envs/{workspace}/terraform.tfstate`
+- **dev workspace**: `<bucket>/envs/dev/terraform.tfstate`
+- **staging workspace**: `<bucket>/envs/staging/terraform.tfstate`
+- **prod workspace**: `<bucket>/envs/prod/terraform.tfstate`
 
 ## Important Notes
 
