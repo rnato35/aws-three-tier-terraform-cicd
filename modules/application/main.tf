@@ -245,7 +245,7 @@ resource "aws_iam_instance_profile" "web" {
 
 locals {
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    db_host                    = aws_db_instance.main.endpoint
+    db_host                    = aws_db_instance.main.address
     db_name                    = var.db_name
     db_username                = var.db_username
     secrets_manager_secret_name = aws_secretsmanager_secret.db_password.name
