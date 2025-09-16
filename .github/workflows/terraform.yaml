@@ -12,6 +12,8 @@ on:
     branches: [ env/dev, env/staging, env/prod ]
     paths:
       - 'infra/envs/**'
+      - 'modules/**'
+      - 'scripts/**'
       - '.github/workflows/terraform.yaml'
   workflow_dispatch:
     inputs:
