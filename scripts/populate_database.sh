@@ -71,8 +71,12 @@ echo "Creating tables and inserting sample data..."
 mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" --default-character-set=utf8 << EOF
 USE $DB_NAME;
 
+-- Drop tables if they exist to ensure clean setup
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS products;
+
 -- Create users table
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
@@ -80,7 +84,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Create products table
-CREATE TABLE IF NOT EXISTS products (
+CREATE TABLE products (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
@@ -89,32 +93,24 @@ CREATE TABLE IF NOT EXISTS products (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Clear existing data (if any)
-DELETE FROM users;
-DELETE FROM products;
-
--- Reset auto-increment
-ALTER TABLE users AUTO_INCREMENT = 1;
-ALTER TABLE products AUTO_INCREMENT = 1;
-
 -- Insert sample users
-INSERT INTO users (id, name, email) VALUES
-(1, 'John Doe', 'john@example.com'),
-(2, 'Jane Smith', 'jane@example.com'),
-(3, 'Mike Johnson', 'mike@example.com'),
-(4, 'Sarah Davis', 'sarah@example.com'),
-(5, 'David Wilson', 'david@example.com');
+INSERT INTO users (name, email) VALUES
+('John Doe', 'john@example.com'),
+('Jane Smith', 'jane@example.com'),
+('Mike Johnson', 'mike@example.com'),
+('Sarah Davis', 'sarah@example.com'),
+('David Wilson', 'david@example.com');
 
 -- Insert sample products
-INSERT INTO products (id, name, description, price, stock) VALUES
-(1, 'Laptop Pro', 'High-performance laptop for professionals', 1299.99, 25),
-(2, 'Wireless Mouse', 'Ergonomic wireless mouse with long battery life', 29.99, 150),
-(3, 'Mechanical Keyboard', 'Premium mechanical keyboard with RGB lighting', 89.99, 75),
-(4, 'USB-C Hub', 'Multi-port USB-C hub with HDMI and Ethernet', 49.99, 100),
-(5, 'External Monitor', '27-inch 4K external monitor', 399.99, 40),
-(6, 'Webcam HD', 'HD webcam for video conferencing', 79.99, 80),
-(7, 'Desk Lamp', 'LED desk lamp with adjustable brightness', 34.99, 120),
-(8, 'Coffee Mug', 'Programmer-themed coffee mug', 14.99, 200);
+INSERT INTO products (name, description, price, stock) VALUES
+('Laptop Pro', 'High-performance laptop for professionals', 1299.99, 25),
+('Wireless Mouse', 'Ergonomic wireless mouse with long battery life', 29.99, 150),
+('Mechanical Keyboard', 'Premium mechanical keyboard with RGB lighting', 89.99, 75),
+('USB-C Hub', 'Multi-port USB-C hub with HDMI and Ethernet', 49.99, 100),
+('External Monitor', '27-inch 4K external monitor', 399.99, 40),
+('Webcam HD', 'HD webcam for video conferencing', 79.99, 80),
+('Desk Lamp', 'LED desk lamp with adjustable brightness', 34.99, 120),
+('Coffee Mug', 'Programmer-themed coffee mug', 14.99, 200);
 
 -- Verify data insertion
 SELECT 'Users count:' as table_info, COUNT(*) as count FROM users

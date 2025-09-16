@@ -53,16 +53,26 @@ This project creates a comprehensive three-tier architecture with a working web 
 ```
 aws-three-tier-terraform-cicd/
 ├── .github/workflows/
-│   └── terraform.yml          # CI/CD workflow
+│   └── terraform.yaml         # CI/CD workflow
+├── docs/
+│   └── MANUAL_WORKFLOWS.md    # Manual workflow documentation
 ├── infra/envs/
+│   ├── dev/                   # Development environment config
+│   ├── staging/               # Staging environment config
+│   ├── prod/                  # Production environment config
 │   ├── main.tf                # Main infrastructure configuration
 │   ├── variables.tf           # Input variables
 │   ├── locals.tf              # Local values
 │   └── versions.tf            # Terraform and provider versions
-├── modules/network/
-│   ├── main.tf                # Network module implementation
-│   ├── variables.tf           # Network module variables
-│   └── outputs.tf             # Network module outputs
+├── modules/
+│   ├── application/           # Application tier module
+│   │   ├── main.tf            # Application module implementation
+│   │   ├── variables.tf       # Application module variables
+│   │   └── outputs.tf         # Application module outputs
+│   └── network/               # Network tier module
+│       ├── main.tf            # Network module implementation
+│       ├── variables.tf       # Network module variables
+│       └── outputs.tf         # Network module outputs
 └── scripts/                   # Helper scripts
 ```
 
@@ -74,12 +84,11 @@ aws-three-tier-terraform-cicd/
 
 ## 🔧 Configuration
 
-### Required GitHub Secrets
+### OIDC Authentication
 
-```
-AWS_ACCESS_KEY_ID      # AWS access key
-AWS_SECRET_ACCESS_KEY  # AWS secret key
-```
+This repository is configured to use **OpenID Connect (OIDC)** for AWS authentication instead of access/secret keys. This provides enhanced security by using temporary credentials and eliminating the need to store long-term AWS credentials in GitHub secrets.
+
+For detailed instructions on setting up OIDC authentication and configuring the Terraform backend, see: [one-click-aws-terraform-backend-gitops-oidc](https://github.com/rnato35/one-click-aws-terraform-backend-gitops-oidc)
 
 ### Required GitHub Variables
 
@@ -138,23 +147,33 @@ web_desired_capacity = 2
 1. **Fork or clone** this repository
 2. **Configure** the required secrets and variables in your GitHub repository
 3. **Create a feature branch** and make your changes
-4. **Open a pull request** - this will trigger:
+4. **Open a pull request to main** - this will trigger:
    - Terraform format check
    - Terraform validation
    - Terraform plan (with output in PR comments)
-5. **Merge to main** - this will trigger:
-   - Terraform apply with auto-approval
+5. **Environment Promotion Workflow**:
+   - Merge changes from **main to env/dev** - triggers dev deployment
+   - Merge from **env/dev to env/staging** - triggers staging deployment
+   - Merge from **env/staging to env/prod** - triggers production deployment
 
 ### Manual Deployment
 
-If you prefer manual deployment:
+If you prefer manual deployment, you'll need to provide the database password as an environment variable:
 
 ```bash
-cd infra/envs
+# Set the database password environment variable
+export TF_VAR_db_password="YourSecurePassword123!"
+
+# Navigate to your environment
+cd infra/envs/dev  # or staging/prod
+
+# Deploy
 terraform init
 terraform plan
 terraform apply
 ```
+
+**Note**: The `db_password` variable is required and must be provided via the `TF_VAR_db_password` environment variable for security reasons. Never commit passwords to your repository.
 
 ## 📊 Outputs
 
