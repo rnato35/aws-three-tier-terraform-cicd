@@ -1,0 +1,46 @@
+# AWS Three-Tier Architecture Configuration - Dev Environment
+# Copy this file to terraform.tfvars and customize for your local environment
+
+# Basic Configuration
+env_name       = "dev"
+region         = "us-east-1"
+aws_profile    = "your-profile-name"  # Set your local AWS profile here
+project_prefix = "three-tier"
+
+# Network Configuration
+vpc_cidr = "10.0.0.0/16"
+az_count = 2
+
+# Network Feature Flags
+enable_nat_gateway = true
+single_nat_gateway = true
+enable_flow_logs   = false
+enable_nacls       = false
+
+# Application Configuration
+certificate_arn = "arn:aws:acm:us-east-1:YOUR-ACCOUNT-ID:certificate/YOUR-CERT-ID"
+domain_name     = "your-domain.com"
+subdomain       = "dev-demo"
+
+# Web Tier Configuration
+web_instance_type    = "t3.micro"
+web_min_capacity     = 1
+web_max_capacity     = 3
+web_desired_capacity = 2
+
+# Database Configuration
+db_instance_class    = "db.t3.micro"
+db_allocated_storage = 20
+db_engine_version    = "8.0"
+db_name              = "sampledb"
+db_username          = "admin"
+# db_password - Set as environment variable TF_VAR_db_password for security
+# For local development, you can set: export TF_VAR_db_password="YourSecurePassword123!"
+
+# Resource Tags
+tags = {
+  Environment = "dev"
+  Project     = "three-tier-architecture"
+  Owner       = "your-email@domain.com"
+  ManagedBy   = "terraform"
+}

@@ -1,0 +1,67 @@
+# AWS Three-Tier Architecture Configuration
+# Copy this file to infra/envs/{environment}/terraform.tfvars and customize the values
+
+# Basic Configuration
+region = "us-west-2"
+env_name = "dev"
+project_prefix = "three-tier"
+aws_profile = ""  # Leave empty for default AWS profile
+
+# Network Configuration
+vpc_cidr = "10.0.0.0/16"
+az_count = 2
+
+# Optional: Specify custom Availability Zones
+# azs = ["us-west-2a", "us-west-2b"]
+
+# Optional: Specify custom subnet CIDRs (if not specified, they will be calculated automatically)
+# public_subnet_cidrs      = ["10.0.1.0/24", "10.0.2.0/24"]
+# private_app_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24"]
+# private_db_subnet_cidrs  = ["10.0.21.0/24", "10.0.22.0/24"]
+
+# Network Feature Flags
+enable_nat_gateway = true
+single_nat_gateway = true  # Set to false for HA (one NAT gateway per AZ)
+enable_flow_logs   = false # Enable VPC Flow Logs for monitoring
+enable_nacls       = false # Enable Network ACLs for additional security
+
+# ===================================
+# Application Configuration
+# ===================================
+
+# REQUIRED: SSL Certificate ARN from AWS Certificate Manager
+certificate_arn = "arn:aws:acm:us-west-2:123456789012:certificate/your-certificate-id"
+
+# REQUIRED: Your domain name (must have a hosted zone in Route53)
+domain_name = "example.com"
+
+# Subdomain for this environment (will create subdomain.example.com)
+subdomain = "demo"
+
+# ===================================
+# Web Tier Configuration
+# ===================================
+
+web_instance_type    = "t3.micro"  # EC2 instance type
+web_min_capacity     = 1           # Minimum number of instances
+web_max_capacity     = 3           # Maximum number of instances
+web_desired_capacity = 2           # Desired number of instances
+
+# ===================================
+# Database Configuration
+# ===================================
+
+db_instance_class     = "db.t3.micro"  # RDS instance class
+db_allocated_storage  = 20             # Storage in GB
+db_engine_version     = "8.0"          # MySQL version
+db_name               = "sampledb"     # Database name
+db_username           = "admin"        # Database username
+db_password           = "YourSecurePassword123!"  # Database password (keep secure!)
+
+# Resource Tags
+tags = {
+  Environment = "dev"
+  Project     = "three-tier-architecture"
+  Owner       = "platform-team"
+  ManagedBy   = "terraform"
+}
